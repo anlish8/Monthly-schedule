@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>每月工作计划备忘录</title>
+    <meta name="description" content="零依赖的每月工作计划备忘录，支持拖拽排序、Excel导入导出、离线使用">
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    
+    <!-- 本地化字体和图标 -->
+    <link rel="stylesheet" href="fonts/system-fonts.css">
+    <link rel="stylesheet" href="fonts/fontawesome-local.css">
+    
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- SheetJS库用于Excel导出 -->
+    <script src="./xlsx.full.min.js"></script>
+
+    <!-- 主脚本文件 -->
+    <script src="./script.js"></script>
+
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-info">
+                <div class="date-display" id="currentDate"></div>
+                <div class="week-info" id="weekInfo"></div>
+            </div>
+            <div class="controls">
+                <button class="btn btn-primary" onclick="addTask()"><i class="fas fa-plus-circle"></i> 添加任务</button>
+                <div class="export-dropdown">
+                    <button class="btn btn-primary dropdown-toggle" onclick="toggleExportDropdown()"><i class="fas fa-file-export"></i> 导出日/月报</button>
+                    <div class="dropdown-menu" id="exportDropdown">
+                        <button class="dropdown-item" onclick="showDailyExportModal()"><i class="fas fa-calendar-day"></i> 导出日报</button>
+                        <button class="dropdown-item" onclick="exportWeeklyReport()"><i class="fas fa-chart-pie"></i> 导出月报</button>
+                    </div>
+                </div>
+                <div class="backup-dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" onclick="toggleBackupDropdown()"><i class="fas fa-shield-alt"></i> 数据备份</button>
+                    <div class="dropdown-menu" id="backupDropdown">
+                        <button class="dropdown-item" onclick="exportToExcel()"><i class="fas fa-file-csv"></i> 导出CSV备份</button>
+                        <button class="dropdown-item" onclick="showImportModal()"><i class="fas fa-file-import"></i> 导入CSV恢复</button>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" onclick="clearWeek()"><i class="fas fa-broom"></i> 清空本月</button>
+                <button class="btn btn-outline" onclick="showSettingsModal()"><i class="fas fa-cog"></i> 设置</button>
+            </div>
+        </header>
+
+
+
+        <main class="main-content">
+            <div class="table-title-container">
+                <h1 class="table-title" id="tableTitle" onclick="editTitle()">每月工作计划表</h1>
+                <input type="text" class="table-title-input" id="tableTitleInput" style="display: none;" onblur="saveTitle()" onkeypress="handleTitleKeypress(event)">
+            </div>
+            <div class="monthly-grid" id="monthlyGrid">
+                <!-- 时间标题 -->
+                <div class="time-slot-header">时间</div>
+                
+                <!-- 时段标题（纵向排列） -->
+                <div class="time-slot-header">
+                    <div class="time-slot-name">上午</div>
+                    <div class="time-slot-range" id="mobileTimeRangeAM">08:00-12:00</div>
+                </div>
+                <div class="time-slot-header">
+                    <div class="time-slot-name">下午</div>
+                    <div class="time-slot-range" id="mobileTimeRangePM">13:00-18:00</div>
+                </div>
+                <div class="time-slot-header">
+                    <div class="time-slot-name">晚上</div>
+                    <div class="time-slot-range" id="mobileTimeRangeEVENING">19:00-23:00</div>
+                </div>
+
+                <!-- 1-31日日期标签和对应的任务单元格 -->
+                <!-- 第1天 -->
+                <div class="day-label" data-day="1">1日</div>
+                <div class="task-cell" data-day="1" data-slot="AM" onclick="addTask(1, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="1" data-slot="PM" onclick="addTask(1, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="1" data-slot="EVENING" onclick="addTask(1, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第2天 -->
+                <div class="day-label" data-day="2">2日</div>
+                <div class="task-cell" data-day="2" data-slot="AM" onclick="addTask(2, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="2" data-slot="PM" onclick="addTask(2, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="2" data-slot="EVENING" onclick="addTask(2, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第3天 -->
+                <div class="day-label" data-day="3">3日</div>
+                <div class="task-cell" data-day="3" data-slot="AM" onclick="addTask(3, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="3" data-slot="PM" onclick="addTask(3, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="3" data-slot="EVENING" onclick="addTask(3, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第4天 -->
+                <div class="day-label" data-day="4">4日</div>
+                <div class="task-cell" data-day="4" data-slot="AM" onclick="addTask(4, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="4" data-slot="PM" onclick="addTask(4, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="4" data-slot="EVENING" onclick="addTask(4, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第5天 -->
+                <div class="day-label" data-day="5">5日</div>
+                <div class="task-cell" data-day="5" data-slot="AM" onclick="addTask(5, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="5" data-slot="PM" onclick="addTask(5, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="5" data-slot="EVENING" onclick="addTask(5, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第6天 -->
+                <div class="day-label" data-day="6">6日</div>
+                <div class="task-cell" data-day="6" data-slot="AM" onclick="addTask(6, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="6" data-slot="PM" onclick="addTask(6, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="6" data-slot="EVENING" onclick="addTask(6, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第7天 -->
+                <div class="day-label" data-day="7">7日</div>
+                <div class="task-cell" data-day="7" data-slot="AM" onclick="addTask(7, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="7" data-slot="PM" onclick="addTask(7, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="7" data-slot="EVENING" onclick="addTask(7, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第8天 -->
+                <div class="day-label" data-day="8">8日</div>
+                <div class="task-cell" data-day="8" data-slot="AM" onclick="addTask(8, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="8" data-slot="PM" onclick="addTask(8, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="8" data-slot="EVENING" onclick="addTask(8, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第9天 -->
+                <div class="day-label" data-day="9">9日</div>
+                <div class="task-cell" data-day="9" data-slot="AM" onclick="addTask(9, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="9" data-slot="PM" onclick="addTask(9, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="9" data-slot="EVENING" onclick="addTask(9, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第10天 -->
+                <div class="day-label" data-day="10">10日</div>
+                <div class="task-cell" data-day="10" data-slot="AM" onclick="addTask(10, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="10" data-slot="PM" onclick="addTask(10, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="10" data-slot="EVENING" onclick="addTask(10, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 继续添加第11-31天 -->
+                <!-- 第11天 -->
+                <div class="day-label" data-day="11">11日</div>
+                <div class="task-cell" data-day="11" data-slot="AM" onclick="addTask(11, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="11" data-slot="PM" onclick="addTask(11, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="11" data-slot="EVENING" onclick="addTask(11, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第12天 -->
+                <div class="day-label" data-day="12">12日</div>
+                <div class="task-cell" data-day="12" data-slot="AM" onclick="addTask(12, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="12" data-slot="PM" onclick="addTask(12, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="12" data-slot="EVENING" onclick="addTask(12, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第13天 -->
+                <div class="day-label" data-day="13">13日</div>
+                <div class="task-cell" data-day="13" data-slot="AM" onclick="addTask(13, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="13" data-slot="PM" onclick="addTask(13, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="13" data-slot="EVENING" onclick="addTask(13, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第14天 -->
+                <div class="day-label" data-day="14">14日</div>
+                <div class="task-cell" data-day="14" data-slot="AM" onclick="addTask(14, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="14" data-slot="PM" onclick="addTask(14, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="14" data-slot="EVENING" onclick="addTask(14, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第15天 -->
+                <div class="day-label" data-day="15">15日</div>
+                <div class="task-cell" data-day="15" data-slot="AM" onclick="addTask(15, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="15" data-slot="PM" onclick="addTask(15, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="15" data-slot="EVENING" onclick="addTask(15, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第16天 -->
+                <div class="day-label" data-day="16">16日</div>
+                <div class="task-cell" data-day="16" data-slot="AM" onclick="addTask(16, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="16" data-slot="PM" onclick="addTask(16, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="16" data-slot="EVENING" onclick="addTask(16, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第17天 -->
+                <div class="day-label" data-day="17">17日</div>
+                <div class="task-cell" data-day="17" data-slot="AM" onclick="addTask(17, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="17" data-slot="PM" onclick="addTask(17, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="17" data-slot="EVENING" onclick="addTask(17, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第18天 -->
+                <div class="day-label" data-day="18">18日</div>
+                <div class="task-cell" data-day="18" data-slot="AM" onclick="addTask(18, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="18" data-slot="PM" onclick="addTask(18, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="18" data-slot="EVENING" onclick="addTask(18, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第19天 -->
+                <div class="day-label" data-day="19">19日</div>
+                <div class="task-cell" data-day="19" data-slot="AM" onclick="addTask(19, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="19" data-slot="PM" onclick="addTask(19, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="19" data-slot="EVENING" onclick="addTask(19, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第20天 -->
+                <div class="day-label" data-day="20">20日</div>
+                <div class="task-cell" data-day="20" data-slot="AM" onclick="addTask(20, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="20" data-slot="PM" onclick="addTask(20, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="20" data-slot="EVENING" onclick="addTask(20, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第21天 -->
+                <div class="day-label" data-day="21">21日</div>
+                <div class="task-cell" data-day="21" data-slot="AM" onclick="addTask(21, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="21" data-slot="PM" onclick="addTask(21, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="21" data-slot="EVENING" onclick="addTask(21, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第22天 -->
+                <div class="day-label" data-day="22">22日</div>
+                <div class="task-cell" data-day="22" data-slot="AM" onclick="addTask(22, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="22" data-slot="PM" onclick="addTask(22, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="22" data-slot="EVENING" onclick="addTask(22, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第23天 -->
+                <div class="day-label" data-day="23">23日</div>
+                <div class="task-cell" data-day="23" data-slot="AM" onclick="addTask(23, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="23" data-slot="PM" onclick="addTask(23, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="23" data-slot="EVENING" onclick="addTask(23, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第24天 -->
+                <div class="day-label" data-day="24">24日</div>
+                <div class="task-cell" data-day="24" data-slot="AM" onclick="addTask(24, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="24" data-slot="PM" onclick="addTask(24, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="24" data-slot="EVENING" onclick="addTask(24, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第25天 -->
+                <div class="day-label" data-day="25">25日</div>
+                <div class="task-cell" data-day="25" data-slot="AM" onclick="addTask(25, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="25" data-slot="PM" onclick="addTask(25, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="25" data-slot="EVENING" onclick="addTask(25, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第26天 -->
+                <div class="day-label" data-day="26">26日</div>
+                <div class="task-cell" data-day="26" data-slot="AM" onclick="addTask(26, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="26" data-slot="PM" onclick="addTask(26, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="26" data-slot="EVENING" onclick="addTask(26, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第27天 -->
+                <div class="day-label" data-day="27">27日</div>
+                <div class="task-cell" data-day="27" data-slot="AM" onclick="addTask(27, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="27" data-slot="PM" onclick="addTask(27, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="27" data-slot="EVENING" onclick="addTask(27, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第28天 -->
+                <div class="day-label" data-day="28">28日</div>
+                <div class="task-cell" data-day="28" data-slot="AM" onclick="addTask(28, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="28" data-slot="PM" onclick="addTask(28, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="28" data-slot="EVENING" onclick="addTask(28, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第29天 -->
+                <div class="day-label" data-day="29">29日</div>
+                <div class="task-cell" data-day="29" data-slot="AM" onclick="addTask(29, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="29" data-slot="PM" onclick="addTask(29, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="29" data-slot="EVENING" onclick="addTask(29, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第30天 -->
+                <div class="day-label" data-day="30">30日</div>
+                <div class="task-cell" data-day="30" data-slot="AM" onclick="addTask(30, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="30" data-slot="PM" onclick="addTask(30, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="30" data-slot="EVENING" onclick="addTask(30, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+
+                <!-- 第31天 -->
+                <div class="day-label" data-day="31">31日</div>
+                <div class="task-cell" data-day="31" data-slot="AM" onclick="addTask(31, 'AM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="31" data-slot="PM" onclick="addTask(31, 'PM')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+                <div class="task-cell" data-day="31" data-slot="EVENING" onclick="addTask(31, 'EVENING')" ondrop="drop(event, 'grid')" ondragover="allowDrop(event)"></div>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- 任务编辑模态框 -->
+    <div class="modal" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">添加任务</h3>
+                <button class="close-btn" onclick="closeModal()">✕</button>
+            </div>
+            <form id="taskForm" onsubmit="saveTask(event)">
+                <div class="form-group">
+                    <label>任务标题</label>
+                    <input type="text" class="form-control" id="taskTitle" required>
+                </div>
+                <div class="form-group" style="display: flex; gap: 15px;">
+                    <div style="flex: 1;">
+                        <label>开始时间</label>
+                        <input type="time" class="form-control" id="taskStart" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>结束时间</label>
+                        <input type="time" class="form-control" id="taskEnd" required>
+                    </div>
+                </div>
+                <div style="font-size: 12px; color: #666; margin-top: 5px; margin-bottom: 10px;">
+                    💡 提示：可以直接手动输入时间，格式为 HH:MM
+                </div>
+
+                <div class="form-group">
+                    <label>优先级</label>
+                    <div class="priority-selector">
+                        <button type="button" class="priority-btn" data-priority="3" onclick="selectPriority(3)">低</button>
+                        <button type="button" class="priority-btn" data-priority="2" onclick="selectPriority(2)">中</button>
+                        <button type="button" class="priority-btn" data-priority="1" onclick="selectPriority(1)">高</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>日期选择 <span style="font-size: 12px; color: #666; font-weight: normal;">（可以多选）</span></label>
+                    <div class="weekday-selector">
+                        <button type="button" class="weekday-btn" data-day="1" onclick="toggleWeekday(1)">1日</button>
+                        <button type="button" class="weekday-btn" data-day="2" onclick="toggleWeekday(2)">2日</button>
+                        <button type="button" class="weekday-btn" data-day="3" onclick="toggleWeekday(3)">3日</button>
+                        <button type="button" class="weekday-btn" data-day="4" onclick="toggleWeekday(4)">4日</button>
+                        <button type="button" class="weekday-btn" data-day="5" onclick="toggleWeekday(5)">5日</button>
+                        <button type="button" class="weekday-btn" data-day="6" onclick="toggleWeekday(6)">6日</button>
+                        <button type="button" class="weekday-btn" data-day="7" onclick="toggleWeekday(7)">7日</button>
+                        <button type="button" class="weekday-btn" data-day="8" onclick="toggleWeekday(8)">8日</button>
+                        <button type="button" class="weekday-btn" data-day="9" onclick="toggleWeekday(9)">9日</button>
+                        <button type="button" class="weekday-btn" data-day="10" onclick="toggleWeekday(10)">10日</button>
+                        <button type="button" class="weekday-btn" data-day="11" onclick="toggleWeekday(11)">11日</button>
+                        <button type="button" class="weekday-btn" data-day="12" onclick="toggleWeekday(12)">12日</button>
+                        <button type="button" class="weekday-btn" data-day="13" onclick="toggleWeekday(13)">13日</button>
+                        <button type="button" class="weekday-btn" data-day="14" onclick="toggleWeekday(14)">14日</button>
+                        <button type="button" class="weekday-btn" data-day="15" onclick="toggleWeekday(15)">15日</button>
+                        <button type="button" class="weekday-btn" data-day="16" onclick="toggleWeekday(16)">16日</button>
+                        <button type="button" class="weekday-btn" data-day="17" onclick="toggleWeekday(17)">17日</button>
+                        <button type="button" class="weekday-btn" data-day="18" onclick="toggleWeekday(18)">18日</button>
+                        <button type="button" class="weekday-btn" data-day="19" onclick="toggleWeekday(19)">19日</button>
+                        <button type="button" class="weekday-btn" data-day="20" onclick="toggleWeekday(20)">20日</button>
+                        <button type="button" class="weekday-btn" data-day="21" onclick="toggleWeekday(21)">21日</button>
+                        <button type="button" class="weekday-btn" data-day="22" onclick="toggleWeekday(22)">22日</button>
+                        <button type="button" class="weekday-btn" data-day="23" onclick="toggleWeekday(23)">23日</button>
+                        <button type="button" class="weekday-btn" data-day="24" onclick="toggleWeekday(24)">24日</button>
+                        <button type="button" class="weekday-btn" data-day="25" onclick="toggleWeekday(25)">25日</button>
+                        <button type="button" class="weekday-btn" data-day="26" onclick="toggleWeekday(26)">26日</button>
+                        <button type="button" class="weekday-btn" data-day="27" onclick="toggleWeekday(27)">27日</button>
+                        <button type="button" class="weekday-btn" data-day="28" onclick="toggleWeekday(28)">28日</button>
+                        <button type="button" class="weekday-btn" data-day="29" onclick="toggleWeekday(29)">29日</button>
+                        <button type="button" class="weekday-btn" data-day="30" onclick="toggleWeekday(30)">30日</button>
+                        <button type="button" class="weekday-btn" data-day="31" onclick="toggleWeekday(31)">31日</button>
+                        <button type="button" class="weekday-btn" data-day="all" onclick="toggleAllWeekdays()">每天</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea class="form-control" id="taskNote" rows="3"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 导入模态框 -->
+    <div class="modal" id="importModal">
+        <div class="modal-content" style="max-width: 600px; width: 90%;">
+            <div class="modal-header">
+                <h3 style="margin: 0; color: var(--primary-color);">
+                    <span style="margin-right: 8px;">📥</span>CSV任务导入
+                </h3>
+                <button class="close-btn" onclick="closeImportModal()" style="font-size: 24px; color: var(--text-light);">✕</button>
+            </div>
+            
+            <div class="modal-body" style="padding: 30px;">
+                <!-- 文件上传区域 -->
+                <div class="import-upload-area" style="
+                    border: 2px dashed var(--border-color);
+                    border-radius: 6px;
+                    padding: 15px 10px;
+                    text-align: center;
+                    transition: all 0.3s ease;
+                    margin-bottom: 15px;
+                    background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                " onmouseover="this.style.borderColor='var(--primary-color)'; this.style.background='linear-gradient(135deg, #f0f4ff 0%, #e8f0ff 100%)';" 
+                   onmouseout="this.style.borderColor='var(--border-color)'; this.style.background='linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%)';">
+                    
+                    <div style="font-size: 28px; margin-bottom: 8px; color: var(--primary-color);">📁</div>
+                    <h4 style="margin: 0 0 6px 0; color: var(--text-color); font-size: 15px;">拖拽文件到此处或点击选择</h4>
+                    <p style="margin: 0 0 8px 0; color: var(--text-light); font-size: 12px;">
+                        支持CSV格式文件，文件大小不超过5MB
+                    </p>
+                    <input type="file" id="fileInput" accept=".csv" onchange="handleFileSelect(event)" style="
+                        display: none;
+                    ">
+                    <div style="text-align: center;">
+                        <button type="button" onclick="event.stopPropagation(); document.getElementById('fileInput').click()" class="btn btn-primary" style="
+                            background: linear-gradient(135deg, var(--primary-color), #0056b3);
+                            border: none;
+                            padding: 8px 20px;
+                            border-radius: 5px;
+                            font-size: 13px;
+                            font-weight: 500;
+                            color: white;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.2);
+                            margin: 0 auto;
+                            display: inline-block;
+                        " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(0, 123, 255, 0.3)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0, 123, 255, 0.2)'">
+                            📁 选择CSV文件
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 文件信息 -->
+                <div id="fileInfo" style="display: none; margin-bottom: 20px; padding: 15px; background: #f8f9ff; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <strong id="fileName" style="color: var(--text-color);"></strong>
+                            <span id="fileSize" style="color: var(--text-light); margin-left: 10px; font-size: 12px;"></span>
+                        </div>
+                        <button onclick="clearFile()" style="background: none; border: none; color: var(--text-light); cursor: pointer; font-size: 18px;">✕</button>
+                    </div>
+                </div>
+
+                <!-- 预览区域 -->
+                <div id="importPreview" style="display: none;">
+                    <div style="display: flex; align-items: center; margin-bottom: 15px; padding: 15px; background: linear-gradient(135deg, #e8f5e8, #f0f8f0); border-radius: 8px;">
+                        <div style="font-size: 24px; margin-right: 12px;">✨</div>
+                        <div>
+                            <h4 style="margin: 0 0 5px 0; color: var(--text-color);">
+                                找到 <span id="taskCount" style="color: var(--primary-color); font-weight: bold;">0</span> 个有效任务
+                            </h4>
+                            <p style="margin: 0; color: var(--text-light); font-size: 14px;">请确认导入内容是否正确</p>
+                        </div>
+                    </div>
+                    
+                    <div style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; background: white;">
+                        <div id="previewList" style="padding: 0;"></div>
+                    </div>
+                </div>
+
+                <!-- 导入说明 -->
+                <div style="margin-top: 20px; padding: 15px; background: #fff8e1; border-left: 4px solid #ffa726; border-radius: 4px;">
+                    <h5 style="margin: 0 0 10px 0; color: #e65100;">📄 CSV文件格式说明</h5>
+                    <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">
+                        请确保CSV文件包含以下列：<strong>星期,时段,标题,开始时间,结束时间,优先级,备注</strong>
+                    </p>
+                    <p style="margin: 0 0 8px 0; font-size: 13px; color: #888;">
+                        例如：周一,上午,团队会议,09:00,10:00,高,讨论项目进度
+                    </p>
+                    <div style="margin: 10px 0; padding: 10px; background: #e3f2fd; border-left: 3px solid #2196f3; border-radius: 4px;">
+                        <h6 style="margin: 0 0 5px 0; color: #0d47a1; font-size: 13px;">💡 编码提示</h6>
+                        <p style="margin: 0; font-size: 12px; color: #1565c0;">
+                            如果导入后出现乱码，请将CSV文件保存为UTF-8编码格式。在Excel中：另存为 → CSV UTF-8格式
+                        </p>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <a href="import_template.csv" download="每月任务模板.csv" style="
+                            display: inline-block;
+                            padding: 8px 16px;
+                            background: var(--primary-color);
+                            color: white;
+                            text-decoration: none;
+                            border-radius: 6px;
+                            font-size: 13px;
+                            transition: all 0.3s ease;
+                        " onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='var(--primary-color)'">
+                            📥 下载CSV模板文件
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer" style="padding: 20px 30px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px;">
+                <button class="btn btn-secondary" onclick="closeImportModal()" style="padding: 10px 20px; border-radius: 6px;">取消</button>
+                <button class="btn btn-primary" onclick="confirmImport()" id="confirmImportBtn" disabled style="padding: 10px 20px; border-radius: 6px; background: linear-gradient(135deg, var(--primary-color), #0056b3);">
+                    确认导入
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 设置模态框 -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content" style="max-width: 500px; max-height: 80vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>设置</h3>
+                <button class="close-btn" onclick="closeSettingsModal()">✕</button>
+            </div>
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label>主题</label>
+                <div class="theme-selector">
+                    <button type="button" class="theme-btn" onclick="setTheme('light')" title="浅色主题"></button>
+                    <button type="button" class="theme-btn" onclick="setTheme('dark')" title="深色主题"></button>
+                    <button type="button" class="theme-btn" onclick="setTheme('green')" title="护眼绿主题"></button>
+                </div>
+            </div>
+            <!-- 移除隐藏周六周日的功能 -->
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label>时段设置</label>
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; padding: 6px; margin-bottom: 10px; font-size: 12px; color: #856404;">
+                    💡 提示：上午时段和下午时段为必选，不可取消显示
+                </div>
+                
+                <!-- 时间范围显示设置 -->
+                <div style="margin-bottom: 10px; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px;">
+                    <label style="font-size: 14px; margin: 0; display: flex; align-items: center;">
+                        <input type="checkbox" id="showMobileTimeRange" checked style="margin-right: 8px;">
+                        显示时间范围
+                    </label>
+                    <div style="font-size: 12px; color: #666; margin-top: 4px;">
+                        控制是否显示时间段的具体时间范围
+                    </div>
+                </div>
+                
+                <!-- 上午时段设置 -->
+                <div style="margin-bottom: 10px; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <label style="font-size: 14px; margin: 0; display: flex; align-items: center; color: #666;">
+                            <input type="checkbox" id="showMorning" checked style="margin-right: 8px;" disabled>
+                            显示上午时段 (必选)
+                        </label>
+                        <label style="font-size: 14px; margin: 0; display: flex; align-items: center; display: none;">
+                            <input type="checkbox" id="showMorningLabel" checked style="margin-right: 8px;">
+                            显示文字标签
+                        </label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <select class="form-control" id="morningStart" style="width: 100px;">
+                            <option value="01:00">01:00</option>
+                            <option value="01:30">01:30</option>
+                            <option value="02:00">02:00</option>
+                            <option value="02:30">02:30</option>
+                            <option value="03:00">03:00</option>
+                            <option value="03:30">03:30</option>
+                            <option value="04:00">04:00</option>
+                            <option value="04:30">04:30</option>
+                            <option value="05:00">05:00</option>
+                            <option value="05:30">05:30</option>
+                            <option value="06:00">06:00</option>
+                            <option value="06:30">06:30</option>
+                            <option value="07:00">07:00</option>
+                            <option value="07:30">07:30</option>
+                            <option value="08:00" selected>08:00</option>
+                            <option value="08:30">08:30</option>
+                            <option value="09:00">09:00</option>
+                            <option value="09:30">09:30</option>
+                            <option value="10:00">10:00</option>
+                            <option value="10:30">10:30</option>
+                            <option value="11:00">11:00</option>
+                            <option value="11:30">11:30</option>
+                        </select>
+                        <span>至</span>
+                        <select class="form-control" id="morningEnd" style="width: 100px;">
+                            <option value="01:00">01:00</option>
+                            <option value="01:30">01:30</option>
+                            <option value="02:00">02:00</option>
+                            <option value="02:30">02:30</option>
+                            <option value="03:00">03:00</option>
+                            <option value="03:30">03:30</option>
+                            <option value="04:00">04:00</option>
+                            <option value="04:30">04:30</option>
+                            <option value="05:00">05:00</option>
+                            <option value="05:30">05:30</option>
+                            <option value="06:00">06:00</option>
+                            <option value="06:30">06:30</option>
+                            <option value="07:00">07:00</option>
+                            <option value="07:30">07:30</option>
+                            <option value="08:00">08:00</option>
+                            <option value="08:30">08:30</option>
+                            <option value="09:00">09:00</option>
+                            <option value="09:30">09:30</option>
+                            <option value="10:00">10:00</option>
+                            <option value="10:30">10:30</option>
+                            <option value="11:00">11:00</option>
+                            <option value="11:30">11:30</option>
+                            <option value="12:00" selected>12:00</option>
+                            <option value="12:30">12:30</option>
+                            <option value="13:00">13:00</option>
+                            <option value="13:30">13:30</option>
+                            <option value="14:00">14:00</option>
+                            <option value="14:30">14:30</option>
+                            <option value="15:00">15:00</option>
+                            <option value="15:30">15:30</option>
+                            <option value="16:00">16:00</option>
+                            <option value="16:30">16:30</option>
+                            <option value="17:00">17:00</option>
+                            <option value="17:30">17:30</option>
+                            <option value="18:00">18:00</option>
+                            <option value="18:30">18:30</option>
+                            <option value="19:00">19:00</option>
+                            <option value="19:30">19:30</option>
+                            <option value="20:00">20:00</option>
+                            <option value="20:30">20:30</option>
+                            <option value="21:00">21:00</option>
+                            <option value="21:30">21:30</option>
+                            <option value="22:00">22:00</option>
+                            <option value="22:30">22:30</option>
+                            <option value="23:00">23:00</option>
+                            <option value="23:30">23:30</option>
+                            <option value="24:00">24:00</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 下午时段设置 -->
+                <div style="margin-bottom: 10px; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <label style="font-size: 14px; margin: 0; display: flex; align-items: center; color: #666;">
+                            <input type="checkbox" id="showAfternoon" checked style="margin-right: 8px;" disabled>
+                            显示下午时段 (必选)
+                        </label>
+                        <label style="font-size: 14px; margin: 0; display: flex; align-items: center; display: none;">
+                            <input type="checkbox" id="showAfternoonLabel" checked style="margin-right: 8px;">
+                            显示文字标签
+                        </label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <select class="form-control" id="afternoonStart" style="width: 100px;">
+                            <option value="12:00">12:00</option>
+                            <option value="12:30">12:30</option>
+                            <option value="13:00" selected>13:00</option>
+                            <option value="13:30">13:30</option>
+                            <option value="14:00">14:00</option>
+                            <option value="14:30">14:30</option>
+                            <option value="15:00">15:00</option>
+                            <option value="15:30">15:30</option>
+                        </select>
+                        <span>至</span>
+                        <select class="form-control" id="afternoonEnd" style="width: 100px;">
+                            <option value="16:00">16:00</option>
+                            <option value="16:30">16:30</option>
+                            <option value="17:00">17:00</option>
+                            <option value="17:30">17:30</option>
+                            <option value="18:00" selected>18:00</option>
+                            <option value="18:30">18:30</option>
+                            <option value="19:00">19:00</option>
+                            <option value="19:30">19:30</option>
+                            <option value="20:00">20:00</option>
+                            <option value="20:30">20:30</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 晚上时段设置 -->
+                <div style="margin-bottom: 10px; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                        <label style="font-size: 14px; margin: 0; display: flex; align-items: center;">
+                            <input type="checkbox" id="showEvening" checked style="margin-right: 8px;">
+                            显示晚上时段
+                        </label>
+                        <label style="font-size: 14px; margin: 0; display: flex; align-items: center; display: none;">
+                            <input type="checkbox" id="showEveningLabel" checked style="margin-right: 8px;">
+                            显示文字标签
+                        </label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <select class="form-control" id="eveningStart" style="width: 100px;">
+                            <option value="18:00">18:00</option>
+                            <option value="18:30">18:30</option>
+                            <option value="19:00" selected>19:00</option>
+                            <option value="19:30">19:30</option>
+                            <option value="20:00">20:00</option>
+                            <option value="20:30">20:30</option>
+                            <option value="21:00">21:00</option>
+                            <option value="21:30">21:30</option>
+                        </select>
+                        <span>至</span>
+                        <select class="form-control" id="eveningEnd" style="width: 100px;">
+                            <option value="21:00">21:00</option>
+                            <option value="21:30">21:30</option>
+                            <option value="22:00">22:00</option>
+                            <option value="22:30">22:30</option>
+                            <option value="23:00" selected>23:00</option>
+                            <option value="23:30">23:30</option>
+                            <option value="24:00">24:00</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 15px;">
+                <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日报导出模态框 -->
+    <div class="modal" id="dailyExportModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 style="margin: 0; color: var(--primary-color);">
+                    <span style="margin-right: 8px;">📋</span>导出日报
+                </h3>
+                <button class="close-btn" onclick="closeDailyExportModal()">✕</button>
+            </div>
+            <div class="modal-body" style="padding: 30px;">
+                <div class="form-group">
+                    <label style="font-size: 16px; font-weight: 500; margin-bottom: 15px; display: block;">选择要导出的日期：</label>
+                    <div class="weekday-selector" id="exportDaySelector" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; max-height: none; overflow: visible;">
+                        <!-- 日期按钮将由JavaScript动态生成 -->
+                    </div>
+                </div>
+                <div style="background: #f8f9fa; border-radius: 8px; padding: 15px; margin-top: 20px;">
+                    <p style="margin: 0; font-size: 14px; color: #666;">
+                        <strong>📄 导出说明：</strong><br>
+                        • 将导出选定日期的所有时段任务<br>
+                        • 文件格式：Excel (.xlsx)<br>
+                        • 包含任务标题、时间、优先级等信息
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 20px 30px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 12px;">
+                <button class="btn btn-secondary" onclick="closeDailyExportModal()">取消</button>
+                <button class="btn btn-primary" onclick="exportDailyReport()" id="exportDailyBtn" disabled>
+                    📈 导出日报
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示消息 -->
+    <div class="toast" id="toast"></div>
+
+    <!-- 删除确认模态框 -->
+    <div class="modal" id="deleteConfirmModal">
+        <div class="modal-content" style="max-width: 400px; text-align: center;">
+            <div class="modal-header" style="border-bottom: none; padding-bottom: 10px;">
+                <h3 style="margin: 0; color: var(--primary-color); font-size: 18px;">
+                    <span style="margin-right: 8px;"><i class="fas fa-exclamation-circle"></i></span>确认删除
+                </h3>
+            </div>
+            <div class="modal-body" style="padding: 20px 30px;">
+                <p style="margin: 0; font-size: 16px; color: var(--text-color); line-height: 1.5;">
+                    确定要删除这个任务吗？
+                </p>
+                <p style="margin: 10px 0 0 0; font-size: 14px; color: #666;">
+                    此操作无法撤销
+                </p>
+            </div>
+            <div class="modal-footer" style="padding: 20px 30px; border-top: 1px solid var(--border-color); display: flex; justify-content: center; gap: 15px;">
+                <button class="btn btn-secondary" onclick="closeDeleteConfirmModal()" style="min-width: 80px;">取消</button>
+                <button class="btn btn-danger" onclick="confirmDeleteTask()" style="min-width: 80px; background: #dc3545; border-color: #dc3545;">删除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 清空本月数据确认模态框 -->
+    <div class="modal" id="clearMonthConfirmModal">
+        <div class="modal-content clear-month-modal">
+            <div class="modal-header">
+                <h3>
+                    <span class="modal-icon"><i class="fas fa-broom"></i></span>
+                    清空本月数据
+                </h3>
+            </div>
+            <div class="modal-body">
+                <div class="warning-message">
+                    <div class="warning-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="warning-content">
+                        <p class="warning-title">确定要清空本月所有任务吗？</p>
+                        <p class="warning-desc">此操作将删除本月的所有任务数据，且无法恢复。</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeClearMonthModal()">
+                    <i class="fas fa-times"></i> 取消
+                </button>
+                <button class="btn btn-danger" onclick="confirmClearMonth()">
+                    <i class="fas fa-trash-alt"></i> 确认清空
+                </button>
+            </div>
+        </div>
+    </div>    
+</body>
+</html>
